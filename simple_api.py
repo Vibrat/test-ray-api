@@ -4,7 +4,7 @@ from fastapi import FastAPI
 app = FastAPI()
 
 
-@serve.deployment(num_replicas=2)
+@serve.deployment()
 @serve.ingress(app)
 class SimpleAPI:
     def __init__(self):

@@ -8,15 +8,19 @@ spec:
   serveConfigV2: |
     applications:
       - name: simple_api
-        import_path: simple_api:ray_app
+        import_path: simple_api.ray_app
         route_prefix: /
         runtime_env:
-          working_dir: "https://github.com/ray-project/serve_config_examples/archive/36862c251615e258a58285934c7c41cffd1ee3b7.zip"
+          working_dir: "https://github.com/Vibrat/test-ray-api/archive/refs/heads/main.zip"
           pip:
             - fastapi
         deployments:
           - name: SimpleAPI
-            num_replicas: 2
+            num_replicas: 1
+            ray_actor_options:
+              num_cpus: 1
+              num_gpus: 0
+            user_config: {}
 
   rayClusterConfig:
     rayVersion: "2.6.3"
@@ -32,13 +36,13 @@ spec:
           containers:
             - name: ray-head
               image: rayproject/ray:2.6.3
-              resources:
-                limits:
-                  cpu: 2
-                  memory: 2Gi
-                requests:
-                  cpu: 2
-                  memory: 2Gi
+              # resources:
+              #   limits:
+              #     cpu: 500m
+              #     memory: 512Mi
+              #   requests:
+              #     cpu: 250m
+              #     memory: 256Mi
               ports:
                 - containerPort: 6379
                   name: gcs-server
@@ -69,10 +73,25 @@ spec:
                   preStop:
                     exec:
                       command: ["/bin/sh", "-c", "ray stop"]
-                resources:
-                  limits:
-                    cpu: "1"
-                    memory: "2Gi"
-                  requests:
-                    cpu: "500m"
-                    memory: "2Gi"
+                # resources:
+                #   limits:
+                #     cpu: "500m"
+                #     memory: "512Mi"
+                #   requests:
+                #     cpu: "250m"
+                #     memory: "256Mi"
+# # Add this Service definition to expose the Serve API
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: ray-simple-api-svc
+# spec:
+#   type: NodePort  # or LoadBalancer if you're on a cloud provider
+#   ports:
+#     - port: 8000
+#       targetPort: 8000
+#       protocol: TCP
+#       name: serve
+#   selector:
+#     ray.io/node-type: head
+#     ray.io/cluster: ray-simple-api
