@@ -14,16 +14,17 @@ spec:
           working_dir: "https://github.com/Vibrat/test-ray-api/archive/refs/heads/main.zip"
           pip:
             - fastapi
+            - ray[serve]
         deployments:
           - name: SimpleAPI
-            num_replicas: 1
+            num_replicas: 2
             ray_actor_options:
               num_cpus: 1
-              num_gpus: 0
-            user_config: {}
 
   rayClusterConfig:
-    rayVersion: "2.6.3"
+    rayVersion: "2.9.0" # should match the Ray version in the image of the containers
+    ######################headGroupSpecs#################################
+    # Ray head pod template.
     headGroupSpec:
       # The `rayStartParams` are used to configure the `ray start` command.
       # See https://github.com/ray-project/kuberay/blob/master/docs/guidance/rayStartParams.md for the default settings of `rayStartParams` in KubeRay.
@@ -35,14 +36,14 @@ spec:
         spec:
           containers:
             - name: ray-head
-              image: rayproject/ray:2.6.3
-              # resources:
-              #   limits:
-              #     cpu: 500m
-              #     memory: 512Mi
-              #   requests:
-              #     cpu: 250m
-              #     memory: 256Mi
+              image: rayproject/ray:2.9.0
+              resources:
+                limits:
+                  cpu: 2
+                  memory: 3Gi
+                requests:
+                  cpu: 2
+                  memory: 3Gi
               ports:
                 - containerPort: 6379
                   name: gcs-server
@@ -54,7 +55,7 @@ spec:
                   name: serve
     workerGroupSpecs:
       # the pod replicas in this group typed worker
-      - replicas: 1
+      - replicas: 2
         minReplicas: 1
         maxReplicas: 5
         # logical group name, for this called small-group, also can be functional
@@ -68,18 +69,19 @@ spec:
           spec:
             containers:
               - name: ray-worker # must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character (e.g. 'my-name',  or '123-abc'
-                image: rayproject/ray:2.6.3
+                image: rayproject/ray:2.9.0
                 lifecycle:
                   preStop:
                     exec:
                       command: ["/bin/sh", "-c", "ray stop"]
-                # resources:
-                #   limits:
-                #     cpu: "500m"
-                #     memory: "512Mi"
-                #   requests:
-                #     cpu: "250m"
-                #     memory: "256Mi"
+                resources:
+                  limits:
+                    cpu: "1"
+                    memory: "1Gi"
+                  requests:
+                    cpu: "500m"
+                    memory: "1Gi"
+
 # # Add this Service definition to expose the Serve API
 # apiVersion: v1
 # kind: Service
