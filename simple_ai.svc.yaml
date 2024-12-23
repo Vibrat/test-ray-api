@@ -17,7 +17,8 @@ spec:
             - ray[serve]
         deployments:
           - name: SimpleAPI
-            num_replicas: 2
+            num_replicas: 3
+            max_replicas_per_node: 1
             ray_actor_options:
               num_cpus: 1
 
@@ -82,18 +83,19 @@ spec:
                     cpu: "500m"
                     memory: "1Gi"
 
-# # Add this Service definition to expose the Serve API
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: ray-simple-api-svc
-# spec:
-#   type: NodePort  # or LoadBalancer if you're on a cloud provider
-#   ports:
-#     - port: 8000
-#       targetPort: 8000
-#       protocol: TCP
-#       name: serve
-#   selector:
-#     ray.io/node-type: head
-#     ray.io/cluster: ray-simple-api
+---
+# Add this Service definition to expose the Serve API
+apiVersion: v1
+kind: Service
+metadata:
+  name: ray-simple-api-exposer
+spec:
+  type: NodePort  # or LoadBalancer if you're on a cloud provider
+  ports:
+    - port: 8000
+      targetPort: 8000
+      nodePort: 30000
+      protocol: TCP
+      name: serve
+  selector:
+    ray.io/node-type: head
